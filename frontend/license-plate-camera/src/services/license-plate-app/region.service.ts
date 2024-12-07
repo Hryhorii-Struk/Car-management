@@ -20,14 +20,4 @@ export class FetchRegion{
         })
         return this.region$;
     }
-
-    async update(id: string, obj: object){
-        var info = ''
-        await this.fetchAPI.put(`/regions/${id}`,obj).then(res=>{
-            info = res.data;
-        }).catch((err)=>{
-            console.log(err.message)
-        })
-        return info
-    }
 }

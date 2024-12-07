@@ -1,10 +1,11 @@
 from api.models.role import (RoleModel, RoleModelListOut, RoleModelOut,
-                             UpdateRoleModel)
+                             UpdateRoleModel, RoleDetailModelOut)
 from core.jwt import get_current_user
 from fastapi import APIRouter, Depends, Query
 from utils.decorators import check_is_staff, check_is_staff_or_permission
 from utils.pagination import pagination_info
-from api.controllers.controller import *
+from api.controllers.role import RoleController
+
 
 router = APIRouter(
     prefix='/roles',
@@ -19,17 +20,19 @@ async def get_all_roles(
     limit:int=Query(20,ge=0,le=20),
     current_user=Depends(get_current_user)
 ):
+    roleCtrl = RoleController()
     roles,info = await roleCtrl.roleCrud.get_all(is_get_info=True,page=page,limit=limit)
     dict = pagination_info(roles, info)
     return dict
 
-@router.get('/{id_role}',response_model=RoleModelOut)
+@router.get('/{id_role}',response_model=RoleDetailModelOut)
 @check_is_staff_or_permission
 async def get_role(
     id_role: str,
     current_user=Depends(get_current_user)
 ):
-    role = await roleCtrl.roleCrud.get(value=id_role)
+    roleCtrl = RoleController()
+    role = await roleCtrl.get_role_detail(id_role)
     return role
 
 @router.post('/',response_model=RoleModelOut)
@@ -38,6 +41,7 @@ async def add_role(
     role: RoleModel,
     current_user=Depends(get_current_user)
 ):
+    roleCtrl = RoleController()
     await roleCtrl.roleCrud.set_unique([('role',1)])
     new_role = await roleCtrl.roleCrud.add(role.dict())
     return new_role
@@ -61,6 +65,7 @@ async def update_role(
     data: UpdateRoleModel,
     current_user=Depends(get_current_user)
 ):
+    roleCtrl = RoleController()
     await roleCtrl.update_role(id_role, data)
     return {'detail':'Update successfully'}
 
@@ -71,5 +76,6 @@ async def delete_role(
     id_role: str, 
     current_user=Depends(get_current_user)
 ):
+    roleCtrl = RoleController()
     await roleCtrl.delete_role(id_role)
     return {'detail','delete successfully'}

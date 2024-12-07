@@ -10,7 +10,6 @@ import { RTSPCamera } from '../interfaces/rtsp-camera.interface';
 import ShowCamera from '../components/show-camera/show-camera.component';
 import { LicensePlate } from '../interfaces/license-plate';
 import BaseWebSocketAPI from '../services/base-websocket.service';
-import Board from '../components/board/board.component';
 
 
 export default function RegionView() {
@@ -20,10 +19,10 @@ export default function RegionView() {
   var [regions, setRegions] = useState<Region[]>([]);
   var [cameras, setCameras] = useState<RTSPCamera[]>([]);
   var [value, setValue] = useState<string>('');
-  var [plate, setplate] = useState<LicensePlate>();
+  var [plates, setPlates] = useState<LicensePlate[]>([]);
 
   useEffect(()=>{
-    BaseWebSocketAPI.Instance.receiveDataUseState(setplate);
+    BaseWebSocketAPI.Instance.receiveDataUseState(setPlates);
     // BaseWebSocketAPI.Instance.receiveData();
   },[])
 
@@ -35,12 +34,12 @@ export default function RegionView() {
   },[])
 
   const handleChange = (event: any) => {
-    // window.location.reload();
     BaseWebSocketAPI.Instance.sendData({
       status: event.target.value
     })
     setValue(event.target.value)
     fetchInAndOut.get_rtsp(event.target.value).then((res) => {
+      console.log(`test ${res}`)
       setCameras(res);
     })
   }
@@ -63,12 +62,11 @@ export default function RegionView() {
           ))}
         </Select>
       </FormControl>
-      {/* <pre className="section">{JSON.stringify(cameras, null, ' ')}</pre> */}
-      {!cameras?(<>not camera</>):(cameras.map((camera,i)=>(
-        <div key={i}>
-          <Board name={camera.name} type={camera.type}/>
-          <ShowCamera face_url='' url={camera['rtsp_url']} data={plate} type={camera['type']} />
-        </div>
+      <pre className="section">{JSON.stringify(cameras, null, ' ')}</pre>
+      {/* {console.log(cameras)} */}
+      {/* <pre className="section">{JSON.stringify(plates,null,' ')}</pre>*/}
+      {cameras === undefined ? (<>not camera</>) : (cameras.map((camera, i) => (
+        <ShowCamera url={camera['rtsp_url']} license_plates={plates} />
       )))}
     </>
   );

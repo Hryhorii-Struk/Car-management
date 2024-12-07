@@ -4,6 +4,7 @@ from base.models import BaseModel
 from base.schema import IDSchema, PaginationInfo
 from pydantic import Field
 from utils.pyobjectid import PyObjectId
+# from api.models.user import UserModelOut
 
 
 class RoleModel(BaseModel):
@@ -32,8 +33,22 @@ class UpdateRoleModel(BaseModel):
                 "users":"List[str]"
             }
         }
+        
+
+class UsernameModel(BaseModel):
+    username: Optional[str]
+
+class UserModelOut(UsernameModel,IDSchema):
+    pass
+
+class RoleDetailModel(BaseModel):
+    role: Optional[str]
+    users: Optional[List[UserModelOut]]
 
 class RoleModelOut(UpdateRoleModel,IDSchema):
+    pass
+
+class RoleDetailModelOut(RoleDetailModel, IDSchema):
     pass
 
 class RoleModelListOut(PaginationInfo):

@@ -163,7 +163,7 @@ class BaseCrud(metaclass=SingletonMeta):
             Delete database follow value or array
             -----------------------------------------------------------
             value: for primary key
-            array: for primary keys
+            array: for primary key
             session: use transaction
             -----------------------------------------------------------
         '''

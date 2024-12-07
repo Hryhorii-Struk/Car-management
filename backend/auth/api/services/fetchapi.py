@@ -17,4 +17,3 @@ class FetchVehicleManagement(metaclass=SingletonMeta):
                 if response.status==200:
                     return await response.json()
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail='network bad request')
-

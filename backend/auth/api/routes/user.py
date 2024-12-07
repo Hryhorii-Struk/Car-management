@@ -1,6 +1,6 @@
 from typing import List
 
-# from api.controllers.user import UserController
+from api.controllers.user import UserController
 from api.models.otp import ConfirmOTP
 from api.models.user import (ResetPassword, SendEmail, UpdateRolesUser,
                              UpdateUserModel, UserLogin, UserModel,
@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from utils.decorators import check_is_staff, check_is_staff_or_permission
 from utils.pagination import pagination_info
 from utils.pyobjectid import PyObjectId
-from api.controllers.controller import userCtrl
+import re
 
 router = APIRouter(
     prefix='/user',
@@ -25,7 +25,7 @@ router = APIRouter(
 
 @router.post('/register')
 async def register_user(user: UserModel, task: BackgroundTasks):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     await userCtrl.register(user, task)
     return JSONResponse(
         status_code=status.HTTP_202_ACCEPTED,
@@ -34,10 +34,25 @@ async def register_user(user: UserModel, task: BackgroundTasks):
         }
     )
 
+@router.post('/create-account')
+@check_is_staff_or_permission
+async def create_account_by_admin(
+    user: UserModel,
+    current_user=Depends(get_current_user)
+):
+    userCtrl = UserController()
+    await userCtrl.create_account(user)
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content={
+            'detail': 'Tài khoản tạo thành công'
+        }
+    )
+
 
 @router.post('/confirm_register')
 async def confirm_register(confirmOTP: ConfirmOTP):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     await userCtrl.confirm_register(confirmOTP)
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
@@ -51,7 +66,7 @@ async def confirm_register(confirmOTP: ConfirmOTP):
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     username = form_data.username
     password = form_data.password
-    # userCtrl = UserController()
+    userCtrl = UserController()
     user_lg = UserLogin(username=username, password=password)
     token = await userCtrl.login(user_lg)
     return token
@@ -59,14 +74,14 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 @router.post('/login')
 async def login(user_lg: UserLogin):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     token = await userCtrl.login(user_lg)
     return token
 
 
 @router.post('/forget_password')
 async def forget_password(user: SendEmail, task: BackgroundTasks):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     await userCtrl.forget_password(user, task)
     return JSONResponse(
         status_code=status.HTTP_202_ACCEPTED,
@@ -78,14 +93,14 @@ async def forget_password(user: SendEmail, task: BackgroundTasks):
 
 @router.post('/confirm_forget_password')
 async def confirm_forget_password(confirmOTP: ConfirmOTP):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     token = await userCtrl.confirm_forget_password(confirmOTP)
     return {'reset_token': token}
 
 
 @router.post('/reset_password')
 async def reset_password(resetPassword: ResetPassword):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     await userCtrl.reset_password(resetPassword)
     return JSONResponse(
         status_code=status.HTTP_202_ACCEPTED,
@@ -98,12 +113,20 @@ async def reset_password(resetPassword: ResetPassword):
 @router.get('/users')
 @check_is_staff_or_permission
 async def get_all_user(
-    page: int = Query(0, ge=0),
+        page: int = Query(0, ge=0),
     limit: int = Query(20, ge=0, le=20),
+    search: str = None,
     current_user=Depends(get_current_user)
 ):
-    # userCtrl = UserController()
+    userCtrl = UserController()
+    if search:
+        query={
+            'username': re.compile(f'{search}', re.IGNORECASE)
+        }
+    else:
+        query = {}
     users, info = await userCtrl.userCrud.get_all(
+        query=query,
         is_get_info=True,
         page=page,
         limit=limit
@@ -114,14 +137,14 @@ async def get_all_user(
 
 @router.get('/users/me', response_model=UserModelOut)
 async def get_me(current_user=Depends(get_current_user)):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     user = await userCtrl.userCrud.get(value=current_user.id)
     return user
 
 
 @router.put('/users/me')
 async def update_me(update_user: UpdateUserModel, current_user=Depends(get_current_user)):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     await userCtrl.userCrud.update(value=current_user.id, config_data=update_user.dict())
     return {'detail': 'update successfully'}
 
@@ -142,7 +165,7 @@ async def get_my_avatar(
             status_code=status.HTTP_405_METHOD_NOT_ALLOWED, 
             detail=f'dung lượng hình ảnh không được quá {max_size} KB'
         )
-    # userCtrl = UserController()
+    userCtrl = UserController()
     url = await userCtrl.update_avatar(id=current_user.id, file=content)
     return {'avatar': url}
 
@@ -150,31 +173,23 @@ async def get_my_avatar(
 @router.get('/users/{id_user}', response_model=UserModelOut)
 @check_is_staff_or_permission
 async def get_user(id_user: str, current_user=Depends(get_current_user)):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     user = await userCtrl.userCrud.get(value=id_user)
     return user
 
 
 @router.get('/get_user/{id_user}', response_model=UserModelOut)
 async def system_get_user(id_user: str, key: str):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     if key != settings.PATH_KEY:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail='key not allow')
     user = await userCtrl.userCrud.get(value=id_user)
     return user
 
-@router.get('/get_user_by_username/{username}', response_model=UserModelOut)
-async def system_get_user_by_username(username: str, key: str):
-    if key != settings.PATH_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail='key not allow')
-    user = await userCtrl.userCrud.get(query={'username': username})
-    return user
-
 @router.post('/get_user_list', response_model=List[UserModelOut])
 async def system_get_user_list(ids_user: List[PyObjectId], key: str):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     #c20c4a219481f901
     if key != settings.PATH_KEY:
         raise HTTPException(
@@ -184,7 +199,7 @@ async def system_get_user_list(ids_user: List[PyObjectId], key: str):
 
 @router.get('/get_user_permission/{id_user}')
 async def get_user_permission(id_user: str, key: str):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     if key != settings.PATH_KEY:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail='key not allow')
@@ -194,7 +209,7 @@ async def get_user_permission(id_user: str, key: str):
 
 @router.get('/get_user/{id_user}', response_model=UserModelOut)
 async def system_get_permission(id_user: str, key: str):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     if key != settings.PATH_KEY:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail='key not allow')
@@ -209,7 +224,7 @@ async def update_user(
     update_user: UpdateUserModel, 
     current_user=Depends(get_current_user)
 ):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     await userCtrl.userCrud.update(value=id_user, config_data=update_user.dict())
     return {'detail': 'update successfully'}
 
@@ -217,7 +232,7 @@ async def update_user(
 @router.delete('/users/{id_user}')
 @check_is_staff_or_permission
 async def delete_user(id_user: str, current_user=Depends(get_current_user)):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     await userCtrl.delete_user(id_user=id_user)
     return {'detail': 'delete successfully'}
 
@@ -225,7 +240,7 @@ async def delete_user(id_user: str, current_user=Depends(get_current_user)):
 @router.put('/users/{id_user}/update_roles')
 @check_is_staff_or_permission
 async def update_role_user(id_user: str, data: UpdateRolesUser):
-    # userCtrl = UserController()
+    userCtrl = UserController()
     await userCtrl.update_roles(id_user, data)
     return {'detail': 'Update successfully'}
 

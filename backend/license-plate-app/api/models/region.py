@@ -12,18 +12,7 @@ from .in_and_out_time import Type
 class CameraRTSPModel(BaseModel):
     name: Optional[str]
     rtsp_url: Optional[AnyUrl]
-    face_rtsp_url:  Optional[str] = 0
     type: Optional[Type]
-    
-    # class Config:
-    #     schema_extra = {
-    #         "example": {
-    #             "name": "str",
-    #             "rtsp_url": "url",
-    #             "face_rtsp_url":"str",
-    #             "type": "in or out"
-    #         }
-    #     }
 
 class RegionType(str,Enum):
     parking = 'parking'
@@ -58,26 +47,17 @@ class UpdateRegionModel(BaseModel):
     coordinate: Optional[Coordinate]
     cameras: Optional[List[CameraRTSPModel]] = []
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "region": "str",
-                "type": "str",
-                "coordinate":{
-                    "longitude":"str",
-                    "latitude":"str"
-                },
-                'cameras': [
-                    {
-                        "name": "str",
-                        "rtsp_url": "url",
-                        "face_rtsp_url":"str",
-                        "type": "in or out"
-                    }
-                ]
-                
-            }
-        }
+    # class Config:
+    #     schema_extra = {
+    #         "example": {
+    #             "region": "str",
+    #             "type": "str",
+    #             "coordinate":{
+    #                 "longitude":"str",
+    #                 "latitude":"str"
+    #             },
+    #         }
+    #     }
 
 class RegionModelOutForEntrance(BaseModel):
     region: Optional[str]
