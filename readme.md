@@ -1,9 +1,5 @@
 # Smart Vehicle management.
-### Description:
-A Vehicle Management System that analyze and record the vehicles using ANPR (Automatic number plate recognition) and security using Face-recognition
-### Microservice:
-![img](demo/Microservice.png)
-Backend folder:
+
 - User management and authentication:
 ```
 ├───auth
